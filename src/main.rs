@@ -15,7 +15,7 @@ struct GameWorld {
     world_width: usize,
     world_height: usize,
     particles: Vec<bool>,
-    frame_buffer: Vec<u8>,
+    previous_particles: Vec<bool>,
 }
 
 impl GameWorld {
@@ -29,7 +29,7 @@ impl GameWorld {
             world_width,
             world_height,
             particles: vec![false; world_width * world_height],
-            frame_buffer: vec![0; screen_height * screen_width],
+            previous_particles: vec![false; world_width * world_height],
         })
     }
 
@@ -41,6 +41,7 @@ impl GameWorld {
         }
     }
 
+    // TODO: render bug: the down-right symbol does not render
     fn render(&mut self) -> io::Result<()> {
         let mut frame = Vec::new();
         let mut i = 0;
@@ -69,7 +70,7 @@ impl GameWorld {
             frame.push(sum);
             i += 2;
             
-            if (i % self.world_width) == self.world_width - 1 {
+            if (i % self.world_width) == self.world_width - 2 {
                 i += self.world_width * 3;
             }
             
@@ -139,33 +140,35 @@ impl GameWorld {
     }
 
 
-    // TODO: bug is somewhere here
     fn update(&mut self) {
-        // for x in (0..self.world_width * self.world_height).rev() {
-        //     if self.get_cell_below(x).is_some_and(|x| !x) {
-        //         self.fall_down(x);
-        //     }
-        //     else {
-        //         let (left, right) = self.get_diagonal_cells_below(x);
+        for x in (0..self.world_width * self.world_height).rev() {
+            if !self.particles[x] {
+                continue;
+            }
+            if self.get_cell_below(x).is_some_and(|x| !x) {
+                self.fall_down(x);
+            }
+            else {
+                let (left, right) = self.get_diagonal_cells_below(x);
 
-        //         if left.is_some_and(|x| !x) && right.is_some_and(|x| !x) {
-        //             if random_bool(0.5) {
-        //                 self.fall_left(x);
-        //             }
-        //             else {
-        //                 self.fall_right(x);
-        //             }
-        //         }
+                if left.is_some_and(|x| !x) && right.is_some_and(|x| !x) {
+                    if random_bool(0.5) {
+                        self.fall_left(x);
+                    }
+                    else {
+                        self.fall_right(x);
+                    }
+                }
 
-        //         if left.is_some_and(|x| !x) && (right.is_none() || right.is_some_and(|x| x)) {
-        //             self.fall_left(x);
-        //         }
+                if left.is_some_and(|x| !x) && (right.is_none() || right.is_some_and(|x| x)) {
+                    self.fall_left(x);
+                }
 
-        //         if right.is_some_and(|x| !x) && (left.is_none() || left.is_some_and(|x| x)) {
-        //             self.fall_right(x);
-        //         }
-        //     }
-        // }
+                if right.is_some_and(|x| !x) && (left.is_none() || left.is_some_and(|x| x)) {
+                    self.fall_right(x);
+                }
+            }
+        }
     }
 }
 
@@ -174,17 +177,21 @@ fn main() -> io::Result<()> {
     println!();
     let mut game_world = GameWorld::new()?;
     // game_world.render()?;
-    game_world.particles[3] = true;
-    game_world.particles[33] = true;
-    game_world.particles[303] = true;
-    game_world.particles[31] = true;
+    // game_world.particles[0] = true;
+    // game_world.particles[1] = true;
+    // game_world.particles[2] = true;
+    // game_world.particles[3] = true;
+    // game_world.particles[33] = true;
+    // game_world.particles[2270] = true;
+    // game_world.particles[31] = true;
     loop {
-        // game_world.particles[rand::random_range(0..game_world.world_width)] = true;
+        game_world.particles[rand::random_range(0..game_world.world_width)] = true;
         // game_world.particles[game_world.world_height / 2] = true;
         // game_world.particles[game_world.world_height / 3] = true;
         // game_world.particles[game_world.world_height / 3 * 2] = true;
         game_world.render()?;
         game_world.update();
+        sleep(Duration::from_millis(100));
     }
 
     // game_world.current[game_world.width * game_world.height - 10] = 1;
