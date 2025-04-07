@@ -78,10 +78,10 @@ impl GameWorld {
             }
         }
         
-        for x in frame {
-            let x_pos = x as u16 % self.screen_width as u16;
-            let y_pos = x as u16 / self.screen_width as u16;
-            queue!(stdout(), MoveTo(x_pos, y_pos), Print(Self::convert_to_char(x)?))?;
+        for (i, x) in frame.iter().enumerate() {
+            let x_pos = i as u16 % self.screen_width as u16;
+            let y_pos = i as u16 / self.screen_width as u16;
+            queue!(stdout(), MoveTo(x_pos, y_pos), Print(Self::convert_to_char(*x)?))?;
         }
         stdout().flush()?;
         Ok(())
@@ -138,32 +138,34 @@ impl GameWorld {
         self.particles[x + self.world_width + 1] = true;
     }
 
+
+    // TODO: bug is somewhere here
     fn update(&mut self) {
-        for x in (0..self.world_width * self.world_height).rev() {
-            if self.get_cell_below(x).is_some_and(|x| !x) {
-                self.fall_down(x);
-            }
-            else {
-                let (left, right) = self.get_diagonal_cells_below(x);
+        // for x in (0..self.world_width * self.world_height).rev() {
+        //     if self.get_cell_below(x).is_some_and(|x| !x) {
+        //         self.fall_down(x);
+        //     }
+        //     else {
+        //         let (left, right) = self.get_diagonal_cells_below(x);
 
-                if left.is_some_and(|x| !x) && right.is_some_and(|x| !x) {
-                    if random_bool(0.5) {
-                        self.fall_left(x);
-                    }
-                    else {
-                        self.fall_right(x);
-                    }
-                }
+        //         if left.is_some_and(|x| !x) && right.is_some_and(|x| !x) {
+        //             if random_bool(0.5) {
+        //                 self.fall_left(x);
+        //             }
+        //             else {
+        //                 self.fall_right(x);
+        //             }
+        //         }
 
-                if left.is_some_and(|x| !x) && (right.is_none() || right.is_some_and(|x| x)) {
-                    self.fall_left(x);
-                }
+        //         if left.is_some_and(|x| !x) && (right.is_none() || right.is_some_and(|x| x)) {
+        //             self.fall_left(x);
+        //         }
 
-                if right.is_some_and(|x| !x) && (left.is_none() || left.is_some_and(|x| x)) {
-                    self.fall_right(x);
-                }
-            }
-        }
+        //         if right.is_some_and(|x| !x) && (left.is_none() || left.is_some_and(|x| x)) {
+        //             self.fall_right(x);
+        //         }
+        //     }
+        // }
     }
 }
 
@@ -171,12 +173,16 @@ fn main() -> io::Result<()> {
     execute!(stdout(), Clear(ClearType::All), Hide)?;
     println!();
     let mut game_world = GameWorld::new()?;
-    game_world.render()?;
+    // game_world.render()?;
+    game_world.particles[3] = true;
+    game_world.particles[33] = true;
+    game_world.particles[303] = true;
+    game_world.particles[31] = true;
     loop {
-        // game_world.current[rand::random_range(0..game_world.width)] = 1;
-        game_world.particles[game_world.world_height / 2] = true;
-        game_world.particles[game_world.world_height / 3] = true;
-        game_world.particles[game_world.world_height / 3 * 2] = true;
+        // game_world.particles[rand::random_range(0..game_world.world_width)] = true;
+        // game_world.particles[game_world.world_height / 2] = true;
+        // game_world.particles[game_world.world_height / 3] = true;
+        // game_world.particles[game_world.world_height / 3 * 2] = true;
         game_world.render()?;
         game_world.update();
     }
